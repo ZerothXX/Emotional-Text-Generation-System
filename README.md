@@ -246,10 +246,9 @@ torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
 
 1. **Epoch 损失曲线**：训练损失 vs 验证损失随 epoch 变化
 2. **Step 损失曲线**：单步训练损失的滑动平均（窗口=20），展示细微收敛趋势
-
+![损失曲线](molde/loss_bart.png)
 ```
 # 损失曲线示意
-![损失曲线](molde/loss_bart.png)
 Epoch Loss:
   训练损失逐渐下降，验证损失同步下降，最终趋于收敛
   当验证损失不再改善时触发 Early Stopping
