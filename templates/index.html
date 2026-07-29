@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EmoGen AI - 情感文本生成系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Microsoft YaHei', -apple-system, sans-serif;
+            background: #1e2128;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+        
+        /* 顶部导航 */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 40px;
+            background: #1e2128;
+            border-bottom: 1px solid #2d313a;
+        }
+        .logo {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .logo .emo {
+            color: #7c8aff;
+        }
+        .logo .gen {
+            color: #e0e0e0;
+        }
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+        }
+        .nav-tab {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            background: transparent;
+            color: #888;
+        }
+        .nav-tab:hover {
+            color: #e0e0e0;
+        }
+        .nav-tab.active {
+            background: #7c8aff;
+            color: white;
+        }
+        
+        /* 主页 */
+        .home-page {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: calc(100vh - 60px);
+            padding: 40px;
+        }
+        .home-title {
+            font-size: 36px;
+            margin-bottom: 12px;
+            color: #fff;
+        }
+        .home-subtitle {
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 16px;
+        }
+        .home-cards {
+            display: flex;
+            gap: 24px;
+        }
+        .home-card {
+            background: #262a33;
+            border: 1px solid #2d313a;
+            border-radius: 12px;
+            padding: 32px 48px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .home-card:hover {
+            border-color: #7c8aff;
+            transform: translateY(-4px);
+        }
+        .home-card-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 16px;
+        }
+        .home-card-icon svg {
+            width: 100%;
+            height: 100%;
+        }
+        .home-card-title {
+            font-size: 18px;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+        .home-card-desc {
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* 页面容器 */
+        .page-container {
+            padding: 24px 40px;
+            min-height: calc(100vh - 60px);
+        }
+        .page-content {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 24px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        /* 面板通用 */
+        .config-panel, .progress-panel, .chat-panel {
+            background: #262a33;
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid #2d313a;
+        }
+        .panel-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+        .panel-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #7c8aff;
+        }
+        
+        /* 配置项 */
+        .config-item {
+            margin-bottom: 20px;
+        }
+        .config-item label {
+            display: block;
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 8px;
+        }
+        .file-input-row {
+            display: flex;
+            align-items: center;
+            background: #1e2128;
+            border-radius: 8px;
+            padding: 10px 12px;
+            border: 1px solid #2d313a;
+        }
+        .file-text {
+            flex: 1;
+            font-size: 13px;
+            color: #666;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .file-text.selected {
+            color: #7c8aff;
+        }
+        .btn-browse {
+            background: #2d313a;
+            border: none;
+            color: #e0e0e0;
+            padding: 6px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+            margin-left: 10px;
+        }
+        .btn-browse:hover {
+            background: #3d414a;
+        }
+        .file-status {
+            font-size: 11px;
+            margin-top: 6px;
+        }
+        .file-status.success { color: #4ade80; }
+        .file-status.error { color: #f87171; }
+        
+        /* 训练按钮 */
+        .btn-train {
+            width: 100%;
+            padding: 14px;
+            background: #7c8aff;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 24px;
+        }
+        .btn-train:hover {
+            background: #6b7bff;
+        }
+        .btn-train:disabled {
+            background: #3d414a;
+            cursor: not-allowed;
+        }
+        
+        /* 进度条 */
+        .progress-item {
+            margin-bottom: 20px;
+        }
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 8px;
+        }
+        .progress-percent {
+            color: #e0e0e0;
+        }
+        .progress-bar {
+            height: 6px;
+            background: #1e2128;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #4ade80;
+            border-radius: 3px;
+            transition: width 0.3s;
+        }
+        .progress-fill.purple {
+            background: #7c8aff;
+        }
+        
+        .early-stop-badge {
+            display: none;
+            background: #f59e0b;
+            color: #1e2128;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+        .early-stop-badge.show {
+            display: block;
+        }
+        
+        /* 终端 */
+        .terminal {
+            background: #0d0f12;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 16px;
+        }
+        .terminal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            background: #1e2128;
+            font-size: 11px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .terminal-dots {
+            display: flex;
+            gap: 6px;
+        }
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        .dot.red { background: #f87171; }
+        .dot.yellow { background: #fbbf24; }
+        .dot.green { background: #4ade80; }
+        .terminal-body {
+            padding: 14px;
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+            color: #888;
+            min-height: 200px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .terminal-line {
+            margin-bottom: 4px;
+        }
+        .terminal-line.success { color: #4ade80; }
+        .terminal-line.error { color: #f87171; }
+        .terminal-line.info { color: #7c8aff; }
+</style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="logo">
+            <span class="emo">EmoGen</span><span class="gen">.ai</span>
+        </div>
+        <div class="nav-tabs">
+            <button class="nav-tab" onclick="showPage('train')">训练模式</button>
+            <button class="nav-tab" onclick="showPage('test')">测试模式</button>
+        </div>
+    </nav>
+
+    <!-- 主页 -->
+    <div id="home-page" class="home-page">
+        <h1 class="home-title">EmoGen AI</h1>
+        <p class="home-subtitle">基于 BART 架构的情感文本生成系统</p>
+        <div class="home-cards">
+            <div class="home-card" onclick="showPage('train')">
+                <div class="home-card-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#7c8aff" stroke-width="1.5">
+                        <path d="M12 15a3 3 0 100-6 3 3 0 000 6z"/>
+                        <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
+                    </svg>
+                </div>
+                <div class="home-card-title">模型训练</div>
+                <div class="home-card-desc">Dataset & Training</div>
+            </div>
+            <div class="home-card" onclick="showPage('test')">
+                <div class="home-card-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.5">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polygon points="10,8 16,12 10,16" fill="#a78bfa"/>
+                    </svg>
+                </div>
+                <div class="home-card-title">模型测试</div>
+                <div class="home-card-desc">Inference & Chat</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 训练页面 -->
+    <div id="train-page" class="page-container" style="display: none;">
+        <div class="page-content">
+            <!-- 左侧配置 -->
+            <div class="config-panel">
+                <div class="panel-header">
+                    <span class="panel-title">配置参数</span>
+                </div>
+                
+                <div class="config-item">
+                    <label>数据集 (TXT)</label>
+                    <div class="file-input-row">
+                        <div class="file-text" id="corpus-text">选择 corpus.txt</div>
+                        <button class="btn-browse" onclick="selectFile('corpus')">浏览</button>
+                    </div>
+                </div>
+                
+                <div class="config-item">
+                    <label>情感词典目录</label>
+                    <div class="file-input-row">
+                        <div class="file-text" id="lexicon-text">选择词典文件夹</div>
+                        <button class="btn-browse" onclick="selectFile('lexicon')">选择</button>
+                    </div>
+                    <div class="file-status" id="lexicon-status"></div>
+                </div>
+                
+                <div class="config-item">
+                    <label>输出保存路径</label>
+                    <div class="file-input-row">
+                        <div class="file-text" id="output-text">选择保存位置</div>
+                        <button class="btn-browse" onclick="selectFile('output')">设定</button>
+                    </div>
+                </div>
+                
+                <button class="btn-train" id="train-btn" onclick="startTraining()">开始训练</button>
+            </div>
+            
+            <!-- 右侧进度 -->
+            <div class="progress-panel">
+                <div class="panel-header">
+                    <span class="panel-title">任务进度</span>
+                </div>
+                
+                <div class="progress-item">
+                    <div class="progress-label">
+                        <span>数据处理 & 预处理</span>
+                        <span class="progress-percent" id="data-percent">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="data-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+                
+                <div class="progress-item">
+                    <div class="progress-label">
+                        <span>模型加载</span>
+                        <span class="progress-percent" id="model-percent">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="model-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+                
+                <div class="progress-item">
+                    <div class="progress-label">
+                        <span>训练 Epochs (<span id="epoch-current">0</span>/<span id="epoch-total">5</span>)</span>
+                        <span class="progress-percent" id="train-percent">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill purple" id="train-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+                
+                <div class="early-stop-badge" id="early-stop-badge">训练已早停</div>
+                
+                <!-- 终端输出 -->
+                <div class="terminal">
+                    <div class="terminal-header">
+                        <span>TERMINAL OUTPUT</span>
+                        <div class="terminal-dots">
+                            <span class="dot red"></span>
+                            <span class="dot yellow"></span>
+                            <span class="dot green"></span>
+                        </div>
+                    </div>
+                    <div class="terminal-body" id="terminal-output">
+                        <div class="terminal-line">Waiting to start...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 测试页面 -->
+    <div id="test-page" class="page-container" style="display: none;">
+        <div class="test-content">
+            <!-- 顶部模型加载 -->
+            <div class="model-load-bar">
+                <div class="file-input-row" style="flex: 1;">
+                    <div class="file-text" id="model-text">请先加载模型文件（.pt）</div>
+                    <button class="btn-load" id="load-btn" onclick="loadModel()">Load Model</button>
+                </div>
+                <button class="btn-exit" id="exit-btn" onclick="unloadModel()" style="display: none;">退出测试</button>
+            </div>
+            
+            <!-- 加载进度 -->
+            <div class="load-progress" id="load-progress" style="display: none;">
+                <div class="progress-bar" style="height: 4px;">
+                    <div class="progress-fill purple" id="load-fill" style="width: 0%"></div>
+                </div>
+                <div class="load-status" id="load-status">加载中...</div>
+            </div>
+            
+            <!-- 交互区域 -->
+            <div class="chat-panel">
+                <div class="panel-header">
+                    <span class="panel-title">交互生成测试</span>
+                </div>
+                
+                <div class="chat-area" id="chat-area">
+                    <div class="chat-placeholder" id="chat-placeholder">
+                        <div class="placeholder-text">请在上方加载模型文件以开始测试</div>
+                    </div>
+                    <div class="chat-messages" id="chat-messages" style="display: none;"></div>
+                </div>
+                
+                <!-- 情感选择 -->
+                <div class="emotion-bar">
+                    <button class="emotion-btn selected" data-emotion="开心" onclick="selectEmotion('开心')">开心</button>
+                    <button class="emotion-btn" data-emotion="伤心" onclick="selectEmotion('伤心')">伤心</button>
+                    <button class="emotion-btn" data-emotion="生气" onclick="selectEmotion('生气')">生气</button>
+                    <button class="emotion-btn" data-emotion="平静" onclick="selectEmotion('平静')">平静</button>
+                    <button class="emotion-btn" data-emotion="期待" onclick="selectEmotion('期待')">期待</button>
+                    <button class="emotion-btn" data-emotion="失望" onclick="selectEmotion('失望')">失望</button>
+                </div>
+                
+                <!-- 输入框 -->
+                <div class="input-bar">
+                    <input type="text" id="keyword-input" placeholder="等待模型加载..." disabled>
+                    <button class="btn-send" id="send-btn" onclick="generateText()" disabled>发送</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* 测试页面 */
+        .test-content {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .model-load-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #262a33;
+            border-radius: 12px;
+            padding: 12px 16px;
+            border: 1px solid #2d313a;
+            margin-bottom: 16px;
+        }
+        .btn-load {
+            background: #2d313a;
+            border: 1px solid #3d414a;
+            color: #e0e0e0;
+            padding: 8px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+            margin-left: 10px;
+        }
+        .btn-load:hover {
+            background: #3d414a;
+        }
+        .btn-load:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn-exit {
+            background: transparent;
+            border: 1px solid #f87171;
+            color: #f87171;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        .btn-exit:hover {
+            background: #f87171;
+            color: #1e2128;
+        }
+        
+        .load-progress {
+            margin-bottom: 16px;
+        }
+        .load-status {
+            font-size: 12px;
+            color: #888;
+            margin-top: 8px;
+            text-align: center;
+        }
+        
+        /* 聊天区域 */
+        .chat-panel {
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-area {
+            flex: 1;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .chat-placeholder {
+            text-align: center;
+            color: #555;
+        }
+        .placeholder-text {
+            font-size: 14px;
+        }
+        .chat-messages {
+            width: 100%;
+            padding: 16px 0;
+            max-height: 350px;
+            overflow-y: auto;
+        }
+        .message {
+            margin-bottom: 16px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            background: #1e2128;
+        }
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-size: 12px;
+            color: #888;
+        }
+        .message-emotion {
+            background: #7c8aff;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+        .message-results {
+            font-size: 14px;
+            line-height: 1.8;
+        }
+        .result-line {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+        .result-mark {
+            font-size: 12px;
+        }
+        .result-mark.success { color: #4ade80; }
+        .result-mark.fail { color: #f87171; }
+        
+        /* 情感按钮 */
+        .emotion-bar {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            padding: 16px 0;
+            border-top: 1px solid #2d313a;
+        }
+        .emotion-btn {
+            padding: 8px 16px;
+            background: transparent;
+            border: 1px solid #3d414a;
+            border-radius: 20px;
+            color: #888;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .emotion-btn:hover {
+            border-color: #666;
+            color: #e0e0e0;
+        }
+        .emotion-btn.selected {
+            background: #d97706;
+            border-color: #d97706;
+            color: #fff;
+            font-weight: 600;
+        }
+        .emotion-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        
+        /* 输入框 */
+        .input-bar {
+            display: flex;
+            gap: 12px;
+            padding-top: 16px;
+            border-top: 1px solid #2d313a;
+        }
+        .input-bar input {
+            flex: 1;
+            background: #1e2128;
+            border: 1px solid #2d313a;
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: #e0e0e0;
+            font-size: 14px;
+        }
+        .input-bar input:focus {
+            outline: none;
+            border-color: #7c8aff;
+        }
+        .input-bar input:disabled {
+            opacity: 0.5;
+        }
+        .btn-send {
+            background: #7c8aff;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            padding: 12px 24px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-send:hover {
+            background: #6b7bff;
+        }
+        .btn-send:disabled {
+            background: #3d414a;
+            cursor: not-allowed;
+        }
+    </style>
+
+    <script>
+        let selectedEmotion = '开心';
+        let trainInterval = null;
+        let loadInterval = null;
+        let selectedPaths = { corpus: '', lexicon: '', output: '', model: '' };
+        
+        function showPage(page) {
+            document.getElementById('home-page').style.display = 'none';
+            document.getElementById('train-page').style.display = 'none';
+            document.getElementById('test-page').style.display = 'none';
+            
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            
+            if (page === 'home') {
+                document.getElementById('home-page').style.display = 'flex';
+            } else if (page === 'train') {
+                document.getElementById('train-page').style.display = 'block';
+                document.querySelectorAll('.nav-tab')[0].classList.add('active');
+            } else if (page === 'test') {
+                document.getElementById('test-page').style.display = 'block';
+                document.querySelectorAll('.nav-tab')[1].classList.add('active');
+            }
+        }
+        
+        function selectFile(type) {
+            fetch('/api/select_file', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({type: type})
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.path) {
+                    selectedPaths[type] = data.path;
+                    const textEl = document.getElementById(type + '-text');
+                    textEl.textContent = data.path;
+                    textEl.classList.toggle('selected', data.success);
+                    
+                    if (type === 'lexicon') {
+                        const statusEl = document.getElementById('lexicon-status');
+                        statusEl.textContent = data.message;
+                        statusEl.className = 'file-status ' + (data.success ? 'success' : 'error');
+                    }
+                }
+            });
+        }
+        
+        function addTerminalLine(text, type = '') {
+            const terminal = document.getElementById('terminal-output');
+            const line = document.createElement('div');
+            line.className = 'terminal-line' + (type ? ' ' + type : '');
+            line.textContent = text;
+            terminal.appendChild(line);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+        
+        function startTraining() {
+            if (!selectedPaths.corpus || !selectedPaths.lexicon || !selectedPaths.output) {
+                alert('请先选择所有必需的文件和文件夹');
+                return;
+            }
+            
+            document.getElementById('terminal-output').innerHTML = '';
+            addTerminalLine('> 开始训练任务...', 'info');
+            
+            fetch('/api/start_training', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    corpus_path: selectedPaths.corpus,
+                    lexicon_dir: selectedPaths.lexicon,
+                    output_dir: selectedPaths.output
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('train-btn').disabled = true;
+                    trainInterval = setInterval(updateTrainingStatus, 800);
+                } else {
+                    addTerminalLine('错误: ' + data.message, 'error');
+                }
+            });
+        }
+        
+        function updateTrainingStatus() {
+            fetch('/api/training_status')
+            .then(res => res.json())
+            .then(data => {
+                let dataProgress = 0, modelProgress = 0, trainProgress = 0;
+                
+                if (data.progress <= 20) {
+                    dataProgress = data.progress * 5;
+                } else {
+                    dataProgress = 100;
+                }
+                
+                if (data.progress > 20 && data.progress <= 50) {
+                    modelProgress = (data.progress - 20) * 100 / 30;
+                } else if (data.progress > 50) {
+                    modelProgress = 100;
+                }
+                
+                if (data.progress > 60) {
+                    trainProgress = (data.progress - 60) * 100 / 40;
+                }
+                
+                document.getElementById('data-fill').style.width = dataProgress + '%';
+                document.getElementById('data-percent').textContent = Math.round(dataProgress) + '%';
+                
+                document.getElementById('model-fill').style.width = modelProgress + '%';
+                document.getElementById('model-percent').textContent = Math.round(modelProgress) + '%';
+                
+                document.getElementById('train-fill').style.width = trainProgress + '%';
+                document.getElementById('train-percent').textContent = Math.round(trainProgress) + '%';
+                
+                document.getElementById('epoch-current').textContent = data.epoch;
+                document.getElementById('epoch-total').textContent = data.total_epochs;
+                
+                if (data.early_stopped) {
+                    document.getElementById('early-stop-badge').classList.add('show');
+                }
+                
+                if (data.completed || data.error) {
+                    clearInterval(trainInterval);
+                    document.getElementById('train-btn').disabled = false;
+                    
+                    if (data.completed) {
+                        addTerminalLine('训练完成！', 'success');
+                        addTerminalLine('最佳验证损失: ' + data.val_loss, 'success');
+                    }
+                    if (data.error) {
+                        addTerminalLine('错误: ' + data.error, 'error');
+                    }
+                }
+            });
+        }
+        
+        function loadModel() {
+            if (!selectedPaths.model) {
+                fetch('/api/select_file', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({type: 'model'})
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.path && data.success) {
+                        selectedPaths.model = data.path;
+                        document.getElementById('model-text').textContent = data.path;
+                        document.getElementById('model-text').classList.add('selected');
+                        doLoadModel();
+                    }
+                });
+            } else {
+                doLoadModel();
+            }
+        }
+        
+        function doLoadModel() {
+            document.getElementById('load-btn').disabled = true;
+            document.getElementById('load-progress').style.display = 'block';
+            
+            fetch('/api/load_model', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({model_path: selectedPaths.model})
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    loadInterval = setInterval(updateLoadStatus, 500);
+                } else {
+                    document.getElementById('load-status').textContent = '错误: ' + data.message;
+                    document.getElementById('load-btn').disabled = false;
+                }
+            });
+        }
+        
+        function updateLoadStatus() {
+            fetch('/api/test_status')
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('load-fill').style.width = data.progress + '%';
+                
+                if (data.progress < 30) {
+                    document.getElementById('load-status').textContent = '初始化设备...';
+                } else if (data.progress < 50) {
+                    document.getElementById('load-status').textContent = '加载 Tokenizer...';
+                } else if (data.progress < 70) {
+                    document.getElementById('load-status').textContent = '加载预训练模型...';
+                } else if (data.progress < 90) {
+                    document.getElementById('load-status').textContent = '加载训练权重...';
+                } else {
+                    document.getElementById('load-status').textContent = '准备就绪...';
+                }
+                
+                if (data.model_loaded) {
+                    clearInterval(loadInterval);
+                    document.getElementById('load-progress').style.display = 'none';
+                    document.getElementById('load-btn').style.display = 'none';
+                    document.getElementById('exit-btn').style.display = 'inline-block';
+                    
+                    document.getElementById('chat-placeholder').style.display = 'none';
+                    document.getElementById('chat-messages').style.display = 'block';
+                    
+                    document.getElementById('keyword-input').disabled = false;
+                    document.getElementById('keyword-input').placeholder = '输入关键词，如：下雨、考试、工作...';
+                    document.getElementById('send-btn').disabled = false;
+                    document.querySelectorAll('.emotion-btn').forEach(btn => btn.disabled = false);
+                }
+                
+                if (data.error) {
+                    clearInterval(loadInterval);
+                    document.getElementById('load-status').textContent = '错误: ' + data.error;
+                    document.getElementById('load-btn').disabled = false;
+                }
+            });
+        }
+        
+        function selectEmotion(emotion) {
+            selectedEmotion = emotion;
+            document.querySelectorAll('.emotion-btn').forEach(btn => {
+                btn.classList.toggle('selected', btn.dataset.emotion === emotion);
+            });
+        }
+        
+        function generateText() {
+            const keyword = document.getElementById('keyword-input').value.trim();
+            if (!keyword) return;
+            
+            fetch('/api/generate', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ keyword: keyword, emotion: selectedEmotion })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const messages = document.getElementById('chat-messages');
+                    const msg = document.createElement('div');
+                    msg.className = 'message';
+                    
+                    let resultsHtml = '';
+                    data.results.forEach((text, i) => {
+                        // 去除空格后判断关键词是否存在
+                        const cleanText = text.replace(/\s+/g, '');
+                        const cleanKeyword = data.keyword.replace(/\s+/g, '');
+                        const hasKw = cleanText.includes(cleanKeyword);
+                        
+                        resultsHtml += '<div class="result-line"><span class="result-mark ' + (hasKw ? 'success' : 'fail') + '">' + (hasKw ? '✓' : '✗') + '</span><span>' + (i + 1) + '. ' + text + '</span></div>';
+                    });
+                    
+                    msg.innerHTML = '<div class="message-header"><span>关键词: ' + data.keyword + '</span><span class="message-emotion">' + data.emotion + '</span></div><div class="message-results">' + resultsHtml + '</div>';
+                    messages.appendChild(msg);
+                    messages.scrollTop = messages.scrollHeight;
+                    
+                    document.getElementById('keyword-input').value = '';
+                }
+            });
+        }
+        
+        function unloadModel() {
+            fetch('/api/unload_model', {method: 'POST'})
+            .then(() => {
+                selectedPaths.model = '';
+                document.getElementById('model-text').textContent = '请先加载模型文件（.pt）';
+                document.getElementById('model-text').classList.remove('selected');
+                document.getElementById('load-btn').style.display = 'inline-block';
+                document.getElementById('load-btn').disabled = false;
+                document.getElementById('exit-btn').style.display = 'none';
+                
+                document.getElementById('chat-placeholder').style.display = 'block';
+                document.getElementById('chat-messages').style.display = 'none';
+                document.getElementById('chat-messages').innerHTML = '';
+                
+                document.getElementById('keyword-input').disabled = true;
+                document.getElementById('keyword-input').placeholder = '等待模型加载...';
+                document.getElementById('send-btn').disabled = true;
+            });
+        }
+        
+        document.getElementById('keyword-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !this.disabled) generateText();
+        });
+    </script>
+</body>
+</html>
