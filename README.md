@@ -249,6 +249,7 @@ torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
 
 ```
 # 损失曲线示意
+![损失曲线](molde/loss_bart.png)
 Epoch Loss:
   训练损失逐渐下降，验证损失同步下降，最终趋于收敛
   当验证损失不再改善时触发 Early Stopping
