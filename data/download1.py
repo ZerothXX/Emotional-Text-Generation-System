@@ -10,7 +10,7 @@ DATASETS = [
 ]
 # 要下载的数据集列表
 DOWNLOAD_DIR = "datasets"  # 数据集下载的根目录
-TOKEN = "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"  # 访问令牌 (如果需要)
+TOKEN = ""  # 访问令牌 (如果需要)
 
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
